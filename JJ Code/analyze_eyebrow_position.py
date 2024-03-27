@@ -15,11 +15,11 @@ import time
 
 # Initialize dlib's face detector and load the facial landmark predictor
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("/home/juniorjay/Documents/Animatronic Mascot Suit/JJ Code/shape_predictor_68_face_landmarks.dat")
 
 # Establish serial connection with Arduino
-arduino = serial.Serial('COM4', 9600)
-time.sleep(2)  # Wait for connection to establish
+#arduino = serial.Serial('COM4', 9600)
+#time.sleep(2)  # Wait for connection to establish
 
 def send_expression_to_arduino(expression):
     command = f"{expression}\n"
@@ -117,7 +117,7 @@ while True:
         expression = analyze_eyebrows(shape)
         
         # Send the determined expression to Arduino
-        send_expression_to_arduino(expression)
+        #send_expression_to_arduino(expression)
         
         # Optional: Display the result on the frame
         cv2.putText(frame, expression, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
