@@ -1,22 +1,13 @@
-from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
+from picamera2 import Picamera2, Preview
 import time
-
-def capture_and_save_image():
-    # Create a Picamera2 object
-    picam2 = Picamera2()
-    
-    # Configure the camera
-    picam2.start_preview()
-    time.sleep(2)  # Wait for 2 seconds to allow the camera to adjust to lighting conditions
-    
-    try:
-        # Capture and save an image
-        image = picam2.capture_image()
-        with open("captured_image.jpg", "wb") as img_file:
-            img_file.write(image.as_rgb())
-        print("Image has been captured and saved as captured_image.jpg")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-if __name__ == "__main__":
-    capture_and_save_image()
+picam2 = Picamera2()
+video_config = picam2.create_video_configuration(main={"size": (1920, 1080)}, lores={"size": (640, 480)}, display="lores")
+picam2.configure(video_config)
+encoder = H264Encoder(bitrate=10000000)
+output = "test.h264"
+picam2.start_preview(Preview.QTGL)
+picam2.start_recording(encoder, output)
+time.sleep(10)
+picam2.stop_recording()
+picam2.stop_preview()
