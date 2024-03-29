@@ -1,22 +1,21 @@
 from picamera2 import Picamera2
-from picamera2.encoders import JpegEncoder
+import time
 
-def capture_still():
+def capture_and_save_image():
+    # Create a Picamera2 object
     picam2 = Picamera2()
-    picam2.configure(picam2.create_still_configuration())
     
-    # Start the camera to allow it to set its automatic settings.
-    picam2.start()
-    picam2.wait_for_ready()
-
-    # Capture an image. This method returns a capture result object.
-    capture_result = picam2.capture_file("test.jpg")
+    # Configure the camera
+    picam2.start_preview()
+    time.sleep(2)  # Wait for 2 seconds to allow the camera to adjust to lighting conditions
     
-    # Stop the camera
-    picam2.stop()
+    # Capture and save an image
+    image = picam2.capture_image()
+    with open("captured_image.jpg", "wb") as img_file:
+        img_file.write(image.as_rgb())
 
-    print("Capture complete")
+    print("Image has been captured and saved as captured_image.jpg")
 
-# Call the function to capture an image
-capture_still()
+if __name__ == "__main__":
+    capture_and_save_image()
 
