@@ -24,7 +24,8 @@ def remove_classes(predictions, classes_to_remove):
 
 # Load your custom model
 model = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
-
+# model 2 = 
+# model 3 = 
 # Mapping from your model's output classes to human-readable labels
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
 
@@ -66,6 +67,11 @@ while True:
 
         # Predict emotion
         prediction = model.predict(roi)
+        # Predict open eye
+        # prediction = model2.predict(roi)
+        # Predict open mouth
+        # prediction = model3.predict(roi)
+        
         # Assuming 'fear' is at index 2 and 'disgust' is at index 1
         classes_to_remove = [1, 2]
         new_predictions = remove_classes(prediction, classes_to_remove)

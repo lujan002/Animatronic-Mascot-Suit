@@ -6,32 +6,32 @@ Created on Tue Jan 30 21:54:56 2024
 """
 
 
-import cv2 as cv
+import cv2
 import mediapipe as mp
 import time
 import utils, math
 import numpy as np
 import pygame 
-from pygame import mixer 
+# from pygame import mixer 
 
 # variables 
 frame_counter =0
 CEF_COUNTER =0
 TOTAL_BLINKS =0
-start_voice= False
+# start_voice= False
 counter_right=0
 counter_left =0
 counter_center =0 
 # constants
 CLOSED_EYES_FRAME =3
-FONTS =cv.FONT_HERSHEY_COMPLEX
+FONTS =cv2.FONT_HERSHEY_COMPLEX
 
 # initialize mixer 
-mixer.init()
+# mixer.init()
 # loading in the voices/sounds 
-voice_left = mixer.Sound('Voice/left.wav')
-voice_right = mixer.Sound('Voice/Right.wav')
-voice_center = mixer.Sound('Voice/center.wav')
+# voice_left = mixer.Sound('Voice/left.wav')
+# voice_right = mixer.Sound('Voice/Right.wav')
+# voice_center = mixer.Sound('Voice/center.wav')
 
 # face bounder indices 
 FACE_OVAL=[ 10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103,67, 109]
@@ -51,17 +51,17 @@ RIGHT_EYEBROW=[ 70, 63, 105, 66, 107, 55, 65, 52, 53, 46 ]
 map_face_mesh = mp.solutions.face_mesh
 
 # camera object 
-camera = cv.VideoCapture(0)
+camera = cv2.VideoCapture(0)
 _, frame = camera.read()
-img = cv.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv.INTER_CUBIC)
+img = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_CUBIC)
 img_hieght, img_width = img.shape[:2]
 print(img_hieght, img_width)
 
 
 
 # video Recording setup 
-fourcc = cv.VideoWriter_fourcc(*'XVID')
-out = cv.VideoWriter('output21.mp4', fourcc, 30.0, (img_width, img_hieght))
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output21.mp4', fourcc, 30.0, (img_width, img_hieght))
 # landmark detection function 
 
 def landmarksDetection(img, results, draw=False):
@@ -69,7 +69,7 @@ def landmarksDetection(img, results, draw=False):
     # list[(x,y), (x,y)....]
     mesh_coord = [(int(point.x * img_width), int(point.y * img_height)) for point in results.multi_face_landmarks[0].landmark]
     if draw :
-        [cv.circle(img, p, 2, (0,255,0), -1) for p in mesh_coord]
+        [cv2.circle(img, p, 2, (0,255,0), -1) for p in mesh_coord]
 
     # returning the list of tuples for each landmarks 
     return mesh_coord
@@ -91,8 +91,8 @@ def blinkRatio(img, landmarks, right_indices, left_indices):
     rv_top = landmarks[right_indices[12]]
     rv_bottom = landmarks[right_indices[4]]
     # draw lines on right eyes 
-    # cv.line(img, rh_right, rh_left, utils.GREEN, 2)
-    # cv.line(img, rv_top, rv_bottom, utils.WHITE, 2)
+    # cv2.line(img, rh_right, rh_left, utils.GREEN, 2)
+    # cv2.line(img, rv_top, rv_bottom, utils.WHITE, 2)
 
     # LEFT_EYE 
     # horizontal line 
@@ -118,7 +118,7 @@ def blinkRatio(img, landmarks, right_indices, left_indices):
 # Eyes Extrctor function,
 def eyesExtractor(img, right_eye_coords, left_eye_coords):
     # converting color image to  scale image 
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     # getting the dimension of image 
     dim = gray.shape
@@ -127,16 +127,16 @@ def eyesExtractor(img, right_eye_coords, left_eye_coords):
     mask = np.zeros(dim, dtype=np.uint8)
 
     # drawing Eyes Shape on mask with white color 
-    cv.fillPoly(mask, [np.array(right_eye_coords, dtype=np.int32)], 255)
-    cv.fillPoly(mask, [np.array(left_eye_coords, dtype=np.int32)], 255)
+    cv2.fillPoly(mask, [np.array(right_eye_coords, dtype=np.int32)], 255)
+    cv2.fillPoly(mask, [np.array(left_eye_coords, dtype=np.int32)], 255)
 
     # showing the mask 
-    # cv.imshow('mask', mask)
+    # cv2.imshow('mask', mask)
     
     # draw eyes image on mask, where white shape is 
-    eyes = cv.bitwise_and(gray, gray, mask=mask)
+    eyes = cv2.bitwise_and(gray, gray, mask=mask)
     # change black color to gray other than eys 
-    # cv.imshow('eyes draw', eyes)
+    # cv2.imshow('eyes draw', eyes)
     eyes[mask==0]=155
     
     # getting minium and maximum x and y  for right and left eyes 
@@ -165,11 +165,11 @@ def positionEstimator(cropped_eye):
     h, w =cropped_eye.shape
     
     # remove the noise from images
-    gaussain_blur = cv.GaussianBlur(cropped_eye, (9,9),0)
-    median_blur = cv.medianBlur(gaussain_blur, 3)
+    gaussain_blur = cv2.GaussianBlur(cropped_eye, (9,9),0)
+    median_blur = cv2.medianBlur(gaussain_blur, 3)
 
     # applying thrsholding to convert binary_image
-    ret, threshed_eye = cv.threshold(median_blur, 130, 255, cv.THRESH_BINARY)
+    ret, threshed_eye = cv2.threshold(median_blur, 130, 255, cv2.THRESH_BINARY)
 
     # create fixd part for eye with 
     piece = int(w/3) 
@@ -223,69 +223,70 @@ with map_face_mesh.FaceMesh(min_detection_confidence =0.5, min_tracking_confiden
             break # no more frames break
         #  resizing frame
         
-        frame = cv.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv.INTER_CUBIC)
+        frame = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_CUBIC)
         frame_height, frame_width= frame.shape[:2]
-        rgb_frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         results  = face_mesh.process(rgb_frame)
         if results.multi_face_landmarks:
             mesh_coords = landmarksDetection(frame, results, False)
             ratio = blinkRatio(frame, mesh_coords, RIGHT_EYE, LEFT_EYE)
-            # cv.putText(frame, f'ratio {ratio}', (100, 100), FONTS, 1.0, utils.GREEN, 2)
+            # cv2.putText(frame, f'ratio {ratio}', (100, 100), FONTS, 1.0, utils.GREEN, 2)
             utils.colorBackgroundText(frame,  f'Ratio : {round(ratio,2)}', FONTS, 0.7, (30,100),2, utils.PINK, utils.YELLOW)
+            # cv2.putText(frame, f'Ratio: {round(ratio,2)}', (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
             if ratio >3.5:
                 CEF_COUNTER +=1
-                # cv.putText(frame, 'Blink', (200, 50), FONTS, 1.3, utils.PINK, 2)
+                # cv2.putText(frame, 'Blink', (200, 50), FONTS, 1.3, utils.PINK, 2)
                 utils.colorBackgroundText(frame,  f'Blink', FONTS, 1.7, (int(frame_height/2), 100), 2, utils.YELLOW, pad_x=6, pad_y=6, )
 
             else:
                 if CEF_COUNTER>CLOSED_EYES_FRAME:
                     TOTAL_BLINKS +=1
                     CEF_COUNTER =0
-            # cv.putText(frame, f'Total Blinks: {TOTAL_BLINKS}', (100, 150), FONTS, 0.6, utils.GREEN, 2)
+            # cv2.putText(frame, f'Total Blinks: {TOTAL_BLINKS}', (100, 150), FONTS, 0.6, utils.GREEN, 2)
             utils.colorBackgroundText(frame,  f'Total Blinks: {TOTAL_BLINKS}', FONTS, 0.7, (30,150),2)
             
-            cv.polylines(frame,  [np.array([mesh_coords[p] for p in LEFT_EYE ], dtype=np.int32)], True, utils.GREEN, 1, cv.LINE_AA)
-            cv.polylines(frame,  [np.array([mesh_coords[p] for p in RIGHT_EYE ], dtype=np.int32)], True, utils.GREEN, 1, cv.LINE_AA)
+            cv2.polylines(frame,  [np.array([mesh_coords[p] for p in LEFT_EYE ], dtype=np.int32)], True, utils.GREEN, 1, cv2.LINE_AA)
+            cv2.polylines(frame,  [np.array([mesh_coords[p] for p in RIGHT_EYE ], dtype=np.int32)], True, utils.GREEN, 1, cv2.LINE_AA)
 
             # Blink Detector Counter Completed
             right_coords = [mesh_coords[p] for p in RIGHT_EYE]
             left_coords = [mesh_coords[p] for p in LEFT_EYE]
             crop_right, crop_left = eyesExtractor(frame, right_coords, left_coords)
-            # cv.imshow('right', crop_right)
-            # cv.imshow('left', crop_left)
+            # cv2.imshow('right', crop_right)
+            # cv2.imshow('left', crop_left)
             eye_position_right, color = positionEstimator(crop_right)
             utils.colorBackgroundText(frame, f'R: {eye_position_right}', FONTS, 1.0, (40, 220), 2, color[0], color[1], 8, 8)
             eye_position_left, color = positionEstimator(crop_left)
             utils.colorBackgroundText(frame, f'L: {eye_position_left}', FONTS, 1.0, (40, 320), 2, color[0], color[1], 8, 8)
             
-            # Starting Voice Indicator 
-            if eye_position_right=="RIGHT" and pygame.mixer.get_busy()==0 and counter_right<2:
-                # starting counter 
-                counter_right+=1
-                # resetting counters 
-                counter_center=0
-                counter_left=0
-                # playing voice 
-                voice_right.play()
+            # # Starting Voice Indicator 
+            # if eye_position_right=="RIGHT" and pygame.mixer.get_busy()==0 and counter_right<2:
+            #     # starting counter 
+            #     counter_right+=1
+            #     # resetting counters 
+            #     counter_center=0
+            #     counter_left=0
+            #     # playing voice 
+            #     voice_right.play()
 
 
-            if eye_position_right=="CENTER" and pygame.mixer.get_busy()==0 and counter_center <2:
-                # starting Counter 
-                counter_center +=1
-                # resetting counters 
-                counter_right=0
-                counter_left=0
-                # playing voice 
-                voice_center.play()
+            # if eye_position_right=="CENTER" and pygame.mixer.get_busy()==0 and counter_center <2:
+            #     # starting Counter 
+            #     counter_center +=1
+            #     # resetting counters 
+            #     counter_right=0
+            #     counter_left=0
+            #     # playing voice 
+            #     voice_center.play()
             
-            if eye_position_right=="LEFT" and pygame.mixer.get_busy()==0 and counter_left<2: 
-                counter_left +=1
-                # resetting counters 
-                counter_center=0
-                counter_right=0
-                # playing Voice 
-                voice_left.play()
+            # if eye_position_right=="LEFT" and pygame.mixer.get_busy()==0 and counter_left<2: 
+            #     counter_left +=1
+            #     # resetting counters 
+            #     counter_center=0
+            #     counter_right=0
+            #     # playing Voice 
+            #     voice_left.play()
 
 
 
@@ -296,12 +297,12 @@ with map_face_mesh.FaceMesh(min_detection_confidence =0.5, min_tracking_confiden
 
         frame =utils.textWithBackground(frame,f'FPS: {round(fps,1)}',FONTS, 1.0, (30, 50), bgOpacity=0.9, textThickness=2)
         # writing image for thumbnail drawing shape
-        # cv.imwrite(f'img/frame_{frame_counter}.png', frame)
+        # cv2.imwrite(f'img/frame_{frame_counter}.png', frame)
         # wirting the video for demo purpose 
         out.write(frame)
-        cv.imshow('frame', frame)
-        key = cv.waitKey(2)
+        cv2.imshow('frame', frame)
+        key = cv2.waitKey(2)
         if key==ord('q') or key ==ord('Q'):
             break
-    cv.destroyAllWindows()
+    cv2.destroyAllWindows()
     camera.release()

@@ -42,8 +42,8 @@ def eye_aspect_ratio(eye):
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 # This is the path to dlib’s pre-trained facial landmark detector. You can download the detector along with the source code + example videos to this tutorial using the “Downloads” section of the bottom of this blog post.
-ap.add_argument("-p", "--shape-predictor", required=True,
-	help="path to facial landmark predictor")
+# ap.add_argument("-p", "--shape-predictor", required=True,
+# 	help="path to facial landmark predictor")
 # This optional switch controls the path to an input video file residing on disk. If you instead want to work with a live video stream, simply omit this switch when executing the script.
 ap.add_argument("-v", "--video", type=str, default="",
 	help="path to input video file")
@@ -58,11 +58,14 @@ EYE_AR_CONSEC_FRAMES = 3
 COUNTER = 0
 TOTAL = 0
 
+# Path to the facial landmark predictor
+shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
+
 # initialize dlib's face detector (HOG-based) and then create
 # the facial landmark predictor
 print("[INFO] loading facial landmark predictor...")
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor(args["shape_predictor"])
+predictor = dlib.shape_predictor(shape_predictor_path)
 
 # grab the indexes of the facial landmarks for the left and
 # right eye, respectively

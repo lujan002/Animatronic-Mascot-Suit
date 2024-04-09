@@ -23,6 +23,8 @@ import cv2
 from tensorflow.keras.applications import VGG16, InceptionResNetV2
 from keras import regularizers
 from tensorflow.keras.optimizers import Adam,RMSprop,SGD,Adamax
+from sklearn.utils.class_weight import compute_class_weight
+
 #%%
 train_dir = "/Users/20Jan/Junior Jay Capstone/JJ Code/fer-dataset/train" #passing the path with training images
 test_dir = "/Users/20Jan/Junior Jay Capstone/JJ Code/fer-dataset/test"   #passing the path with testing images
@@ -70,6 +72,25 @@ validation_generator = validation_datagen.flow_from_directory( directory = test_
                                                               class_mode = "categorical",
                                                               subset = "validation"
                                                              )
+
+"""
+Weighting the loss function is a strategy to make the model pay more attention 
+to samples from underrepresented classes by assigning higher weights to their loss contributions.
+"""
+# Extract class labels from the training generator
+y_train = train_generator.classes
+
+# `class_indices` has class names as keys and their corresponding labels as values. We need the reverse mapping.
+label_to_class = {v: k for k, v in train_generator.class_indices.items()}
+
+# Calculate class weights
+class_weights = compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(y_train),
+    y=y_train)
+
+# Map computed class weights back to the corresponding classes in 'train_generator.class_indices'
+class_weights_dict = {label_to_class[i]: weight for i, weight in enumerate(class_weights)}
 
 """
 Modeling
@@ -136,7 +157,7 @@ model.add(Dense(512,activation = 'relu'))
 model.add(BatchNormalization())
 model.add(Dropout(0.25))
 
-model.add(Dense(7, activation='softmax'))
+model.add(Dense(5, activation='softmax'))
 
 model.compile(
     optimizer = Adam(learning_rate=0.0001), 
@@ -149,8 +170,8 @@ batch_size = 64
 
 model.summary()
 
-history = model.fit(x = train_generator,epochs = epochs,validation_data = validation_generator)
-
+history = model.fit(x = train_generator,epochs = epochs,validation_data = validation_generator,class_weight=class_weights_dict)
+#%%
 fig , ax = plt.subplots(1,2)
 train_acc = history.history['accuracy']
 train_loss = history.history['loss']
@@ -172,18 +193,19 @@ ax[1].legend(['Train', 'Validation'], loc='upper left')
 
 plt.show()
 
-model.save('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
+model.save('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal3.h5')
 
 #%%
 # Load the saved model
-model = keras.models.load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
+model = keras.models.load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal3.h5')
 
 img = image.load_img("/Users/20Jan/Junior Jay Capstone/JJ Code/fer-dataset/test/angry/PrivateTest_7622844.jpg",target_size = (48,48),color_mode = "grayscale")
 img = np.array(img)
 plt.imshow(img, cmap="grey")
 print(img.shape) #prints (48,48) that is the shape of our image
 
-label_dict = {0:'Angry',1:'Disgust',2:'Fear',3:'Happy',4:'Neutral',5:'Sad',6:'Surprise'}
+# label_dict = {0:'Angry',1:'Disgust',2:'Fear',3:'Happy',4:'Neutral',5:'Sad',6:'Surprise'}
+label_dict = {0:'Angry', 1:'Happy', 2:'Neutral', 3:'Sad', 4:'Surprise'}
 
 img = np.expand_dims(img,axis = 0) #makes image shape (1,48,48)
 img = img.reshape(1,48,48,1)
@@ -199,6 +221,7 @@ train_loss, train_acc = model.evaluate(train_generator)
 test_loss, test_acc   = model.evaluate(validation_generator)
 print("final train accuracy = {:.2f} , validation accuracy = {:.2f}".format(train_acc*100, test_acc*100))
 
-model.save_weights('/Users/20Jan/Junior Jay Capstone/JJ Code/model_weights2.h5')
+model.save_weights('/Users/20Jan/Junior Jay Capstone/JJ Code/model_weights3.weights.h5')
+
 
 
