@@ -152,6 +152,9 @@ while True:
         
         # Display EAR, MAR on frame
         cv2.putText(frame, f'EAR: {ear:.2f}', (x+w, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        # cv2.putText(frame, f'Left EAR: {leftEAR:.2f}', (x - 80, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+        # cv2.putText(frame, f'Right EAR: {rightEAR:.2f}', (x + w , y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
         cv2.putText(frame, "MAR: {:.2f}".format(mar), (x+w, y+70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
         # check to see if the eye aspect ratio is below the blink
@@ -161,7 +164,22 @@ while True:
             # otherwise, the eye aspect ratio is not below the blink
         # threshold
             cv2.putText(frame, "Eyes are Closed!", (x+w,y+40),
-               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
+        
+        # if leftEAR < EYE_AR_THRESH:
+        #     COUNTER += 1
+        #     # otherwise, the eye aspect ratio is not below the blink
+        # # threshold
+        #     cv2.putText(frame, "Left Eye is Closed!", (x-80,y+40),
+        #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
+        
+        # if rightEAR < EYE_AR_THRESH:
+        #     COUNTER += 1
+        #     # otherwise, the eye aspect ratio is not below the blink
+        # # threshold
+        #     cv2.putText(frame, "Right Eye is Closed!", (x+w,y+40),
+        #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
+
         else:
             # if the eyes were closed for a sufficient number of
             # then increment the total number of blinks
