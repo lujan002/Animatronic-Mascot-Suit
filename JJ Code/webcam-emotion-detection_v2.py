@@ -22,10 +22,8 @@ def remove_classes(predictions, classes_to_remove):
     return predictions
 
 
-# Load your custom model
+    # Load your custom model
 model = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
-# model 2 = 
-# model 3 = 
 # Mapping from your model's output classes to human-readable labels
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
 

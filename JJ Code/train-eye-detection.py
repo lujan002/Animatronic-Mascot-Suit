@@ -46,7 +46,7 @@ print ('modules loaded')
 #Data Preprocessing
 #Read data and store it in dataframe
 # Generate data paths with labels
-data_dir = '/kaggle/input/mrl-eye-dataset/data/train'
+data_dir = "/Users/20Jan/Junior Jay Capstone/JJ Code/mrleyedataset/train"
 filepaths = []
 labels = []
 
@@ -64,14 +64,14 @@ Fseries = pd.Series(filepaths, name= 'filepaths')
 Lseries = pd.Series(labels, name='labels')
 df = pd.concat([Fseries, Lseries], axis= 1)
 df
-
+'''
 #Split dataframe into train, valid, and test
 # train dataframe
 train_df, valid_df = train_test_split(df,  train_size= 0.8, shuffle= True, random_state= 123)
 
 #Read test data and store it in dataframe
 # Generate data paths with labels
-data_dir = '/kaggle/input/mrl-eye-dataset/data/test'
+data_dir = '/Users/20Jan/Junior Jay Capstone/JJ Code/mrleyedataset/test'
 filepaths = []
 labels = []
 
@@ -88,10 +88,14 @@ for fold in folds:
 Fseries = pd.Series(filepaths, name= 'filepaths')
 Lseries = pd.Series(labels, name='labels')
 test_df = pd.concat([Fseries, Lseries], axis= 1)
+'''
+# Assuming 'df' is your original DataFrame containing all your data
+train_df, temp_df = train_test_split(df, train_size=0.8, shuffle=True, random_state=123)
+valid_df, test_df = train_test_split(temp_df, test_size=0.5, shuffle=True, random_state=123)
 
 #Create image data generator
 # crobed image size
-batch_size = 16
+batch_size = 64
 img_size = (224, 224)
 channels = 3
 img_shape = (img_size[0], img_size[1], channels)
@@ -151,7 +155,7 @@ base_model = tf.keras.applications.efficientnet.EfficientNetB0(include_top= Fals
 model = Sequential([
     base_model,
     BatchNormalization(axis= -1, momentum= 0.99, epsilon= 0.001),
-    Dense(256, kernel_regularizer= regularizers.l2(l= 0.016), activity_regularizer= regularizers.l1(0.006),
+    Dense(256, kernel_regularizer= regularizers.l2(0.016), activity_regularizer= regularizers.l1(0.006),
                 bias_regularizer= regularizers.l1(0.006), activation= 'relu'),
     Dropout(rate= 0.45, seed= 123),
     Dense(class_count, activation= 'softmax')
@@ -184,8 +188,8 @@ model.summary()
 # _________________________
 
 # Train model
-batch_size = 16   # set batch size for training
-epochs = 10   # number of all epochs in training
+batch_size = 64   # set batch size for training
+epochs = 1   # number of all epochs in training
 
 history = model.fit(x= train_gen, epochs= epochs, verbose= 1, validation_data= valid_gen, 
                     validation_steps= None, shuffle= False)

@@ -23,7 +23,7 @@ def remove_classes(predictions, classes_to_remove):
 
 
 # Load your custom model
-model = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
+model = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal3.h5')
 # model 2 = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_eyes.h5')
 # model 3 = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_mouth.h5')
 

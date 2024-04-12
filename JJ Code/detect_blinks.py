@@ -43,14 +43,14 @@ args = vars(ap.parse_args())
 # define two constants, one for the eye aspect ratio to indicate
 # blink and then a second constant for the number of consecutive
 # frames the eye must be below the threshold
-EYE_AR_THRESH = 0.2
-EYE_AR_CONSEC_FRAMES = 3
+EYE_AR_THRESH = 0.25
+EYE_AR_CONSEC_FRAMES = 2
 # initialize the frame counters and the total number of blinks
 COUNTER = 0
 TOTAL = 0
 
 # Path to the facial landmark predictor
-shape_predictor_path = "shape_predictor_68_face_landmarks.dat"
+shape_predictor_path = "/Users/20Jan/Junior Jay Capstone/JJ Code/shape_predictor_68_face_landmarks.dat"
 
 # initialize dlib's face detector (HOG-based) and then create
 # the facial landmark predictor
@@ -116,6 +116,8 @@ while True:
 			COUNTER += 1
 		# otherwise, the eye aspect ratio is not below the blink
 		# threshold
+			cv2.putText(frame, "Eyes are Closed!", (30,60),
+			cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
 		else:
 			# if the eyes were closed for a sufficient number of
 			# then increment the total number of blinks
