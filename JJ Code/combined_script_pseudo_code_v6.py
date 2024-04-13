@@ -12,9 +12,14 @@ from scipy.spatial import distance as dist
 from tensorflow.keras.models import load_model
 from imutils import face_utils
 
+import sys
+import io
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+
 # Load models
-model = load_model('/Users/20Jan/Junior Jay Capstone/JJ Code/model_optimal2.h5')
-predictor = dlib.shape_predictor('/Users/20Jan/Junior Jay Capstone/JJ Code/shape_predictor_68_face_landmarks.dat')
+model = load_model('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model_optimal2.h5')
+predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
 
 # Initialize the Haar Cascade face detection model
@@ -74,14 +79,30 @@ def remove_classes(predictions, classes_to_remove):
 
 # Start video capture
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+# Ensure the settings were applied by checking the actual values
+actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print(f"Camera set to width: {actual_width}, height: {actual_height}")
+
+frame_skip = 5  # Process every 5th frame
+frame_count = 0
 
 while True:
     ret, frame = cap.read()
     if not ret:
         break
     
+    frame_count += 1
+    if frame_count % frame_skip != 0:
+        continue
+    
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=4, minSize=(30, 30))
+
     
     # Identify the most central face
     if len(faces) > 0:
