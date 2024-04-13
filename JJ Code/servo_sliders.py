@@ -11,7 +11,7 @@ import serial
 import time
 
 # Connect to Arduino
-arduino = serial.Serial('COM4', 9600)
+arduino = serial.Serial('COM5', 9600)
 time.sleep(2) # wait for the serial connection to initialize
 
 # Function to update the label and send data to Arduino
