@@ -14,6 +14,7 @@ model.export(saved_model_path)
 
 # Convert the TensorFlow SavedModel to TensorFlow Lite
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]  # Apply default optimizations for quantization
 tflite_model = converter.convert()
 
 # Save the converted model as a .tflite file

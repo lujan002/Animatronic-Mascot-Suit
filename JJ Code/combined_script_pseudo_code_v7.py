@@ -25,13 +25,12 @@ headless = False
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
-# Load models
+# Load .h5 model (not recommended)
 # model = load_model('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model_optimal2.h5')
-# predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
 
-
-# Load TFLite model and allocate tensors.
-interpreter = tf.lite.Interpreter(model_path="/Users/20Jan/Junior Jay Capstone/JJ Code/model.tflite")
+# Load TFLite model and allocate tensors (for emotion detection).
+# interpreter = tf.lite.Interpreter(model_path="/Users/20Jan/Junior Jay Capstone/JJ Code/model.tflite")
+interpreter = tf.lite.Interpreter(model_path="/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model.tflite")
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
@@ -43,6 +42,9 @@ input_shape = input_details[0]['shape']
 output_shape = output_details[0]['shape']
 
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
+
+# Load dlib model for eye and mouth detection
+predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
 
 # Initialize the Haar Cascade face detection model
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -63,7 +65,7 @@ stability_frames = 2  # Number of frames to keep emotion stable
 
 # Bias factor adjustments
 SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 1.5  # Increase probability by 50%
+SAD_BIAS_FACTOR = 1  
 
 # Function to adjust predictions
 def adjust_predictions(predictions):
@@ -182,6 +184,7 @@ while True:
         # Resize the region of interest for emotion recognition
         roi = cv2.resize(face_roi, (48, 48))
         roi = roi.astype("float") / 255.0
+        roi = roi.astype(np.float32)  # Ensure the data type is float32 for tflite
         roi = np.expand_dims(roi, axis=0)
         roi = np.expand_dims(roi, axis=-1)
 
