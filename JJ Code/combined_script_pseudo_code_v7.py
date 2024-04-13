@@ -4,8 +4,11 @@ Created on Thu Apr 11 21:00:16 2024
 
 @author: 20Jan
 """
+import os
+os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
 import cv2
+# cv2.setUseOptimized(True)
 import numpy as np
 import dlib
 from scipy.spatial import distance as dist
@@ -52,7 +55,7 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 # Constants for blink and mouth open detection
 EYE_AR_THRESH = 0.21
 EYE_AR_CONSEC_FRAMES = 3
-MOUTH_AR_THRESH = 0.79
+MOUTH_AR_THRESH = 0.76
 
 # initialize the frame counters and the total number of blinks
 COUNTER = 0
@@ -60,12 +63,12 @@ TOTAL = 0
 
 # Initialize emotion stability control
 emotion_stability_buffer = []
-stable_emotion = ["Neutral"]
-stability_frames = 2  # Number of frames to keep emotion stable
+stability_frames = 3  # Number of frames to keep emotion stable
+stable_emotion = ["Neutral"] * stability_frames
 
 # Bias factor adjustments
 SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 1  
+SAD_BIAS_FACTOR = 1
 
 # Function to adjust predictions
 def adjust_predictions(predictions):
@@ -120,24 +123,33 @@ pin_mapping = {
 for pin in pin_mapping.values():
     GPIO.setup(pin, GPIO.OUT)
 
-def turn_led(emotion):
-    # Get the correct pin number from the dictionary
-    pin = pin_mapping.get(emotion, None)
+# def turn_led(emotion):
+#     # Get the correct pin number from the dictionary
+#     pin = pin_mapping.get(emotion, None)
     
+#     if pin is None:
+#         print(f"No GPIO pin assigned for the emotion: {emotion}")
+#         return
+    
+#     # Turn on the LED
+#     print(f"Turning on {emotion} LED.")
+#     GPIO.output(pin, 1)
+
+#     time.sleep(1)
+
+#     # Turn off the LED
+#     print(f"Turning off {emotion} LED.")
+#     GPIO.output(pin, 0)
+
+def turn_led(emotion, on=True):
+    """Control LEDs based on emotion and state."""
+    pin = pin_mapping.get(emotion)
     if pin is None:
         print(f"No GPIO pin assigned for the emotion: {emotion}")
         return
+    GPIO.output(pin, on)
+    print(f"{'Turning on' if on else 'Turning off'} {emotion} LED.")
     
-    # Turn on the LED
-    print(f"Turning on {emotion} LED.")
-    GPIO.output(pin, 1)
-
-    time.sleep(1)
-
-    # Turn off the LED
-    print(f"Turning off {emotion} LED.")
-    GPIO.output(pin, 0)
-
 # Start video capture
 cap = cv2.VideoCapture(1)
 if not cap.isOpened():
@@ -181,7 +193,7 @@ while True:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         face_roi = gray[y:y+h, x:x+w]
         
-        # Resize the region of interest for emotion recognition
+        # Resize the regionFalse of interest for emotion recognition
         roi = cv2.resize(face_roi, (48, 48))
         roi = roi.astype("float") / 255.0
         roi = roi.astype(np.float32)  # Ensure the data type is float32 for tflite
@@ -198,6 +210,7 @@ while True:
         interpreter.set_tensor(input_details[0]['index'], roi)
         interpreter.invoke()
         predictions = interpreter.get_tensor(output_details[0]['index'])
+        predictions = remove_classes(predictions, [1,2]) # remove 'disgust' and 'fear' labels
         emotion = emotion_dict[np.argmax(predictions)]
 
         # Update emotion stability buffer
@@ -223,7 +236,10 @@ while True:
         # cv2.putText(frame, predictions, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
         # Send GPIO signal after deciding emotion 
-        turn_led(stable_emotion[-1])
+        if stable_emotion[-1] != stable_emotion[-2]:
+            turn_led(stable_emotion[-2], False)
+            turn_led(stable_emotion[-1])
+        # turn_led(stable_emotion[-1])
 
         # Detecting blinks with Dlib landmarks
         rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
@@ -263,12 +279,12 @@ while True:
         # threshold, and if so, increment the blink frame counter
         if ear < EYE_AR_THRESH:
             COUNTER += 1
-            turn_led('Eyes')
-            # otherwise, the eye aspect ratio is not below the blink threshold
-            if not headless:
-                cv2.putText(frame, "Eyes are Closed!", (x+w,y+40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
-                
+            if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                turn_led('Eyes')
+                # otherwise, the eye aspect ratio is not below the blink threshold
+                if not headless:
+                    cv2.putText(frame, "Eyes are Closed!", (x+w,y+40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)                   
         # if leftEAR < EYE_AR_THRESH:
         #     COUNTER += 1
         #     # otherwise, the eye aspect ratio is not below the blink
@@ -284,11 +300,7 @@ while True:
         #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
 
         else:
-            # if the eyes were closed for a sufficient number of
-            # then increment the total number of blinks
-            if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                TOTAL += 1
-            # reset the eye frame counter
+            turn_led('Eyes', False)
             COUNTER = 0
             
         # Draw text if mouth is open
@@ -297,6 +309,8 @@ while True:
             if not headless:
                 cv2.putText(frame, "Mouth is Open!", (x+w,y+100),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
+        else:
+            turn_led('Mouth', False)
             
     if not headless:
         # Display the resulting frame
