@@ -18,30 +18,32 @@ import io
 import RPi.GPIO as GPIO
 import time
 
+import tensorflow as tf
+
 # Define whether to run the script in headless mode
 headless = False
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 # Load models
-model = load_model('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model_optimal2.h5')
-predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
-emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
+# model = load_model('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model_optimal2.h5')
+# predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
 
-'''
+
 # Load TFLite model and allocate tensors.
-interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter = tf.lite.Interpreter(model_path="/Users/20Jan/Junior Jay Capstone/JJ Code/model.tflite")
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Use the model
-interpreter.set_tensor(input_details[0]['index'], input_data)
-interpreter.invoke()
-predictions = interpreter.get_tensor(output_details[0]['index'])
-'''
+# Constants for model input and output
+input_shape = input_details[0]['shape']
+output_shape = output_details[0]['shape']
+
+emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
+
 # Initialize the Haar Cascade face detection model
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -183,12 +185,18 @@ while True:
         roi = np.expand_dims(roi, axis=0)
         roi = np.expand_dims(roi, axis=-1)
 
-        # Emotion detection
-        predictions = model.predict(roi)
-        predictions = remove_classes(predictions, [1,2]) # remove 'disgust' and 'fear' labels
-        predictions = adjust_predictions(predictions)
-        emotion = emotion_dict[np.argmax(predictions)]
+        # # Emotion detection with .h5 model
+        # predictions = model.predict(roi)
+        # predictions = remove_classes(predictions, [1,2]) # remove 'disgust' and 'fear' labels
+        # predictions = adjust_predictions(predictions)
+        # emotion = emotion_dict[np.argmax(predictions)]
         
+        # Use the TFLite model
+        interpreter.set_tensor(input_details[0]['index'], roi)
+        interpreter.invoke()
+        predictions = interpreter.get_tensor(output_details[0]['index'])
+        emotion = emotion_dict[np.argmax(predictions)]
+
         # Update emotion stability buffer
         if len(emotion_stability_buffer) == 0 or emotion == emotion_stability_buffer[-1]:
             emotion_stability_buffer.append(emotion)

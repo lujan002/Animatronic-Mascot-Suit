@@ -26,8 +26,8 @@ emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # Constants for blink and mouth open detection
-EYE_AR_THRESH = 0.25
-EYE_AR_CONSEC_FRAMES = 2
+EYE_AR_THRESH = 0.21
+EYE_AR_CONSEC_FRAMES = 3
 MOUTH_AR_THRESH = 0.79
 
 # initialize the frame counters and the total number of blinks
@@ -41,7 +41,7 @@ stability_frames = 2  # Number of frames to keep emotion stable
 
 # Bias factor adjustments
 SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 2  # Increase probability by 50%
+SAD_BIAS_FACTOR = 1.5  # Increase probability by 50%
 
 # Function to adjust predictions
 def adjust_predictions(predictions):
