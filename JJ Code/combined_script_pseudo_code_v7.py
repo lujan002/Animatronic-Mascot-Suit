@@ -23,6 +23,9 @@ import time
 
 import tensorflow as tf
 
+from imutils.video import VideoStream
+import argparse
+
 # Define whether to run the script in headless mode
 headless = False
 
@@ -68,11 +71,16 @@ stable_emotion = ["Neutral"] * stability_frames
 
 # Bias factor adjustments
 SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 1
+SAD_BIAS_FACTOR = 5
+
 
 # Function to adjust predictions
 def adjust_predictions(predictions):
+    print("Before adjustment:", predictions)
     predictions[0][SAD_INDEX] *= SAD_BIAS_FACTOR
+    total = np.sum(predictions)
+    predictions /= total if total > 0 else 1
+    print("After adjustment:", predictions)
     return predictions
 
 # Functions to calculate the Eye Aspect Ratio
@@ -84,8 +92,6 @@ def eye_aspect_ratio(eye):
 
 # Mouth Aspect Ratio (MAR) calculation
 def mouth_aspect_ratio(mouth):
-	# compute the euclidean distances between the two sets of
-	# vertical mouth landmarks (x, y)-coordinates
 	A = dist.euclidean(mouth[2], mouth[10]) # 51, 59
 	B = dist.euclidean(mouth[4], mouth[8]) # 53, 57
 
@@ -123,24 +129,6 @@ pin_mapping = {
 for pin in pin_mapping.values():
     GPIO.setup(pin, GPIO.OUT)
 
-# def turn_led(emotion):
-#     # Get the correct pin number from the dictionary
-#     pin = pin_mapping.get(emotion, None)
-    
-#     if pin is None:
-#         print(f"No GPIO pin assigned for the emotion: {emotion}")
-#         return
-    
-#     # Turn on the LED
-#     print(f"Turning on {emotion} LED.")
-#     GPIO.output(pin, 1)
-
-#     time.sleep(1)
-
-#     # Turn off the LED
-#     print(f"Turning off {emotion} LED.")
-#     GPIO.output(pin, 0)
-
 def turn_led(emotion, on=True):
     """Control LEDs based on emotion and state."""
     pin = pin_mapping.get(emotion)
@@ -151,38 +139,69 @@ def turn_led(emotion, on=True):
     print(f"{'Turning on' if on else 'Turning off'} {emotion} LED.")
     
 # Start video capture
-cap = cv2.VideoCapture(1)
+# cap = cv2.VideoCapture('/dev/video0')
+cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("Failed to open the camera.")
 else:
     print("Camera is successfully opened.")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 # Ensure the settings were applied by checking the actual values
 actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 print(f"Camera set to width: {actual_width}, height: {actual_height}")
 
-frame_skip = 5  # Process every 5th frame
-frame_count = 0
+# ap = argparsadjust_predictions(predictions)e.ArgumentParser()
+# ap.add_argument("-w", "--webcam", type=int, default=0,
+# 	help="index of webcam on system")
+# args = vars(ap.parse_args())
+# vs = VideoStream(src=args["webcam"]).start()
+# time.sleep(1.0)
 
-while True:
+# Initialize picamera2
+# picam2 = Picamera2()
+# preview_config = picam2.create_preview_configuration()
+# picam2.configure(preview_config)
+# picam2.start()
+# frame_skip = 30  # Process every 5th frame
+# frame_count = 0
+frame_rate_limit = 5  # Target number of frames per second
+last_time = time.time()
+while True:   
+    # frame_count += 1
+    # if frame_count % frame_skip != 0:
+    #     continue
     ret, frame = cap.read()
     if not ret:
         print("Error: Frame not read.")
         break
-    print("Frame read succesfully.")
+    # Alternative approach: Capture less frames
+    current_time = time.time()
+    elapsed = current_time - last_time
 
-    frame_count += 1
-    if frame_count % frame_skip != 0:
-        continue
-    
+    if elapsed < 1.0 / frame_rate_limit:
+        continue  # Skip processing this frame
+
+    last_time = current_time
+    # Process the frame here
+
+
+    # frame = cap.read()
+    # if frame:
+    #     print("Frame read succesfully.")
+    # Capture frame-by-frame
+    # frame = vs.read()
+    # frame = picam2.capture_array(process_frame, video_port=True)
+    # frame = imutils.resize(frame, width=640, height=480)  
+    # frame = np.array(image)[:, :, :3]  # Convert XRGB to RGB
+    # Convert to greyscale 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=4, minSize=(30, 30))
-
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=3, minSize=(30, 30))
     
     # Identify the most central face
     if len(faces) > 0:
@@ -211,6 +230,7 @@ while True:
         interpreter.invoke()
         predictions = interpreter.get_tensor(output_details[0]['index'])
         predictions = remove_classes(predictions, [1,2]) # remove 'disgust' and 'fear' labels
+        predictions = adjust_predictions(predictions)
         emotion = emotion_dict[np.argmax(predictions)]
 
         # Update emotion stability buffer
@@ -223,18 +243,23 @@ while True:
         if len(emotion_stability_buffer) >= stability_frames:
             stable_emotion.append(emotion_stability_buffer[0])  # The stable emotion
             emotion_stability_buffer = []  # Reset buffer after updating stable emotion
-        # else:
-        #     stable_emotion = emotion_stability_buffer[-1] if emotion_stability_buffer else emotion  # Use the most recent until stable
 
         if not headless:
             # Put the emotion label above the rectangle
-            cv2.putText(frame, stable_emotion[-1], (x+20, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
-        # Show prediction values
-        print(predictions)
-        # predictions = predictions.flatten()
-        # predictions_text = ' '.join([f"{pred:.2f}" for pred in predictions])
-        # cv2.putText(frame, predictions, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+            cv2.putText(frame, stable_emotion[-1], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+            # Optionally, show all emotions with their probabilities
+            # Assuming we know the indexes or can check names to filter out
+            # indexes_to_ignore = [1, 2]  # Typically, 1 for 'Disgust', 2 for 'Fear'
 
+            # Update drawing part of the code:
+            text_start_y = y + h + 20
+            for i, prob in enumerate(predictions[0]):
+                if i not in [1, 2]:  # Only process if not in the ignore list
+                    emotion_label = emotion_dict[i]
+                    if prob > 0:  # Only display if probability is not zero
+                        cv2.putText(frame, f"{emotion_label}: {prob:.2f}", (x + 10, text_start_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 255, 255), 1)
+                        text_start_y += 15  # Move to the next line for the next label
+                
         # Send GPIO signal after deciding emotion 
         if stable_emotion[-1] != stable_emotion[-2]:
             turn_led(stable_emotion[-2], False)
@@ -283,7 +308,7 @@ while True:
                 turn_led('Eyes')
                 # otherwise, the eye aspect ratio is not below the blink threshold
                 if not headless:
-                    cv2.putText(frame, "Eyes are Closed!", (x+w,y+40),
+                    cv2.putText(frame, "Eyes Closed!", (x+w,y+40),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)                   
         # if leftEAR < EYE_AR_THRESH:
         #     COUNTER += 1
@@ -298,7 +323,6 @@ while True:
         # # threshold
         #     cv2.putText(frame, "Right Eye is Closed!", (x+w,y+40),
         #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
-
         else:
             turn_led('Eyes', False)
             COUNTER = 0
@@ -311,7 +335,7 @@ while True:
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
         else:
             turn_led('Mouth', False)
-            
+        
     if not headless:
         # Display the resulting frame
         cv2.imshow('Face and Emotion Detection', frame)
@@ -321,3 +345,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
