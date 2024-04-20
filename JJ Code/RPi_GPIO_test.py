@@ -26,15 +26,18 @@ def set_servo_angles(angle1, angle2):
     time.sleep(0.02)  # Short delay to allow movement to new position
 
 def sweep_servos():
-    # Servo 1 sweeps from 75 to 115, Servo 2 from 115 to 75
-    for angle in range(75, 116):  # Increment angle
+    # Servo 1 sweeps from 97 to 110, Servo 2 from 110 to 97
+    for angle in range(95, 105):  # Increment angle
         set_servo_angles(angle, 190 - angle)  # 190 - angle calculates the opposite movement
         print(f"Servo 1: {angle} degrees, Servo 2: {190 - angle} degrees")
-
-    # Servo 1 sweeps from 115 back to 75, Servo 2 from 75 back to 115
-    for angle in range(115, 74, -1):  # Decrement angle
+    # At this point, beak should be open
+    time.sleep(5)
+    # Servo 1 sweeps from 110 back to 97, Servo 2 from 97 back to 110
+    for angle in range(105, 95, -1):  # Decrement angle
         set_servo_angles(angle, 190 - angle)
         print(f"Servo 1: {angle} degrees, Servo 2: {190 - angle} degrees")
+    # At this point, beak should be closed
+    time.sleep(5)
 
 try:
     while True:

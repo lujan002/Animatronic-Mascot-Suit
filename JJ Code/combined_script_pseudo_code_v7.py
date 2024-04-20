@@ -201,7 +201,7 @@ while True:
     # Convert to greyscale 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=3, minSize=(30, 30))
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(80, 80))
     
     # Identify the most central face
     if len(faces) > 0:
@@ -248,10 +248,6 @@ while True:
             # Put the emotion label above the rectangle
             cv2.putText(frame, stable_emotion[-1], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
             # Optionally, show all emotions with their probabilities
-            # Assuming we know the indexes or can check names to filter out
-            # indexes_to_ignore = [1, 2]  # Typically, 1 for 'Disgust', 2 for 'Fear'
-
-            # Update drawing part of the code:
             text_start_y = y + h + 20
             for i, prob in enumerate(predictions[0]):
                 if i not in [1, 2]:  # Only process if not in the ignore list
