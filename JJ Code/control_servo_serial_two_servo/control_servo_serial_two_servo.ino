@@ -7,9 +7,9 @@ Servo servo2;
 void setup() {
   Serial.begin(9600);
   servo1.attach(10);
-  servo1.write(95);
+  servo1.write(90);
   servo2.attach(11);
-  servo2.write(95);  
+  servo2.write(90);  
   //Attach more servos as needed
 }
 

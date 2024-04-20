@@ -45,7 +45,7 @@ root = tk.Tk()
 root.title("Servo Control")
 
 # Create the first slider
-slider1 = ttk.Scale(root, from_=75, to=93, orient='horizontal')
+slider1 = ttk.Scale(root, from_=75, to=115, orient='horizontal')
 slider1.pack()
 slider1.set(40)
 label1 = tk.Label(root, text="Value: 40")
