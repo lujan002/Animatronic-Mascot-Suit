@@ -87,7 +87,7 @@ stable_emotion = ["Neutral"] * stability_frames
 
 # Bias factor adjustments
 SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 5
+SAD_BIAS_FACTOR = 1
 
 
 # Function to adjust predictions
@@ -155,8 +155,8 @@ def turn_led(emotion, on=True):
     print(f"{'Turning on' if on else 'Turning off'} {emotion} LED.")
     
 # Start video capture
-# cap = cv2.VideoCapture('/dev/video0')
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('/dev/video0')
+# cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("Failed to open the camera.")
 else:
@@ -217,7 +217,7 @@ while True:
     # Convert to greyscale 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(80, 80))
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(150, 150))
     
     # Identify the most central face
     if len(faces) > 0:
