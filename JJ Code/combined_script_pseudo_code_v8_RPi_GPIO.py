@@ -26,13 +26,29 @@ import tensorflow as tf
 from imutils.video import VideoStream
 import argparse
 
+import pigpio
+
+# Initialize pigpio
+pi = pigpio.pi()
+
+# Constants for GPIO pin numbers for the servos
+servo_pin_beak_l = 26 
+servo_pin_beak_r = 16
+
+# Constants for beak control
+BEAK_ANGLE_1 = 108 
+BEAK_ANGLE_2 = 92   
+
+# Helper function to set servo angles
+def set_servo_angle(servo_pin, angle):
+    # Calculate PWM duty cycle for the given angle
+    pulsewidth = int((angle / 180.0) * 2000 + 500)
+    pi.set_servo_pulsewidth(servo_pin, pulsewidth)
+
 # Define whether to run the script in headless mode
 headless = False
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
-
-# Load .h5 model (not recommended)
-# model = load_model('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/model_optimal2.h5')
 
 # Load TFLite model and allocate tensors (for emotion detection).
 # interpreter = tf.lite.Interpreter(model_path="/Users/20Jan/Junior Jay Capstone/JJ Code/model.tflite")
@@ -169,6 +185,7 @@ print(f"Camera set to width: {actual_width}, height: {actual_height}")
 # picam2.start()
 # frame_skip = 30  # Process every 5th frame
 # frame_count = 0
+
 frame_rate_limit = 5  # Target number of frames per second
 last_time = time.time()
 while True:   
@@ -188,7 +205,6 @@ while True:
 
     last_time = current_time
     # Process the frame here
-
 
     # frame = cap.read()
     # if frame:
@@ -218,12 +234,6 @@ while True:
         roi = roi.astype(np.float32)  # Ensure the data type is float32 for tflite
         roi = np.expand_dims(roi, axis=0)
         roi = np.expand_dims(roi, axis=-1)
-
-        # # Emotion detection with .h5 model
-        # predictions = model.predict(roi)
-        # predictions = remove_classes(predictions, [1,2]) # remove 'disgust' and 'fear' labels
-        # predictions = adjust_predictions(predictions)
-        # emotion = emotion_dict[np.argmax(predictions)]
         
         # Use the TFLite model
         interpreter.set_tensor(input_details[0]['index'], roi)
@@ -260,6 +270,7 @@ while True:
         if stable_emotion[-1] != stable_emotion[-2]:
             turn_led(stable_emotion[-2], False)
             turn_led(stable_emotion[-1])
+            # send signal to Arduino to update eyebrows based on emotion
         # turn_led(stable_emotion[-1])
 
         # Detecting blinks with Dlib landmarks
@@ -301,8 +312,9 @@ while True:
         if ear < EYE_AR_THRESH:
             COUNTER += 1
             if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                turn_led('Eyes')
                 # otherwise, the eye aspect ratio is not below the blink threshold
+                turn_led('Eyes')                
+                # send signal to close eyes
                 if not headless:
                     cv2.putText(frame, "Eyes Closed!", (x+w,y+40),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)                   
@@ -321,17 +333,23 @@ while True:
         #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
         else:
             turn_led('Eyes', False)
+            # send signal to open eyes 
             COUNTER = 0
             
         # Draw text if mouth is open
         if mar > MOUTH_AR_THRESH:
             turn_led('Mouth')
+            # send signal to open mouth 
+            set_servo_angle(servo_pin_beak_l, BEAK_ANGLE_1)
+            set_servo_angle(servo_pin_beak_r, BEAK_ANGLE_2)
             if not headless:
                 cv2.putText(frame, "Mouth is Open!", (x+w,y+100),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
         else:
             turn_led('Mouth', False)
-        
+            # send signal to close mouth 
+            set_servo_angle(servo_pin_beak_l, BEAK_ANGLE_2)
+            set_servo_angle(servo_pin_beak_r, BEAK_ANGLE_1)
     if not headless:
         # Display the resulting frame
         cv2.imshow('Face and Emotion Detection', frame)

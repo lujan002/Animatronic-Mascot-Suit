@@ -13,6 +13,7 @@ Sad = 6
 Surprised = 7
 Neutral = 8
 
+
 #Initialize your pin
 GPIO.setup(Angry,GPIO.OUT)
 GPIO.setup(Happy,GPIO.OUT)
