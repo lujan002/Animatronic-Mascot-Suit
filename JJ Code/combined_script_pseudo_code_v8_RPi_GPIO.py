@@ -171,23 +171,12 @@ actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 print(f"Camera set to width: {actual_width}, height: {actual_height}")
 
-# ap = argparsadjust_predictions(predictions)e.ArgumentParser()
-# ap.add_argument("-w", "--webcam", type=int, default=0,
-# 	help="index of webcam on system")
-# args = vars(ap.parse_args())
-# vs = VideoStream(src=args["webcam"]).start()
-# time.sleep(1.0)
-
-# Initialize picamera2
-# picam2 = Picamera2()
-# preview_config = picam2.create_preview_configuration()
-# picam2.configure(preview_config)
-# picam2.start()
-# frame_skip = 30  # Process every 5th frame
-# frame_count = 0
+# Padding parameters
+top, bottom, left, right = [100]*4  # Adjust these values based on your needs
 
 frame_rate_limit = 5  # Target number of frames per second
 last_time = time.time()
+
 while True:   
     # frame_count += 1
     # if frame_count % frame_skip != 0:
@@ -202,18 +191,11 @@ while True:
 
     if elapsed < 1.0 / frame_rate_limit:
         continue  # Skip processing this frame
-
     last_time = current_time
-    # Process the frame here
 
-    # frame = cap.read()
-    # if frame:
-    #     print("Frame read succesfully.")
-    # Capture frame-by-frame
-    # frame = vs.read()
-    # frame = picam2.capture_array(process_frame, video_port=True)
-    # frame = imutils.resize(frame, width=640, height=480)  
-    # frame = np.array(image)[:, :, :3]  # Convert XRGB to RGB
+    # Add padding to the image to simulate a larger field of view
+    frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
     # Convert to greyscale 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))

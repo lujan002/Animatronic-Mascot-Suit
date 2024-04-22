@@ -27,6 +27,7 @@ from imutils.video import VideoStream
 import argparse
 
 import pigpio
+import mediapipe as mp
 
 # Initialize pigpio
 pi = pigpio.pi()
@@ -68,8 +69,12 @@ emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5
 # Load dlib model for eye and mouth detection
 predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
 
-# Initialize the Haar Cascade face detection model
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+# Initialize MediaPipe Face Detection
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
+# Create a Face Detection model
+face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
 # Constants for blink and mouth open detection
 EYE_AR_THRESH = 0.21
@@ -171,23 +176,12 @@ actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 print(f"Camera set to width: {actual_width}, height: {actual_height}")
 
-# ap = argparsadjust_predictions(predictions)e.ArgumentParser()
-# ap.add_argument("-w", "--webcam", type=int, default=0,
-# 	help="index of webcam on system")
-# args = vars(ap.parse_args())
-# vs = VideoStream(src=args["webcam"]).start()
-# time.sleep(1.0)
-
-# Initialize picamera2
-# picam2 = Picamera2()
-# preview_config = picam2.create_preview_configuration()
-# picam2.configure(preview_config)
-# picam2.start()
-# frame_skip = 30  # Process every 5th frame
-# frame_count = 0
+# Padding parameters
+top, bottom, left, right = [100]*4  # Adjust these values based on your needs
 
 frame_rate_limit = 5  # Target number of frames per second
 last_time = time.time()
+
 while True:   
     # frame_count += 1
     # if frame_count % frame_skip != 0:
@@ -202,28 +196,37 @@ while True:
 
     if elapsed < 1.0 / frame_rate_limit:
         continue  # Skip processing this frame
-
     last_time = current_time
-    # Process the frame here
 
-    # frame = cap.read()
-    # if frame:
-    #     print("Frame read succesfully.")
-    # Capture frame-by-frame
-    # frame = vs.read()
-    # frame = picam2.capture_array(process_frame, video_port=True)
-    # frame = imutils.resize(frame, width=640, height=480)  
-    # frame = np.array(image)[:, :, :3]  # Convert XRGB to RGB
-    # Convert to greyscale 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(150, 150))
-    
-    # Identify the most central face
-    if len(faces) > 0:
-        faces = sorted(faces, key=lambda x: (x[2] * x[3]), reverse=True)  # Sort faces based on area (w*h)
-        x, y, w, h = faces[0]  # Consider only the largest face
-    # for (x, y, w, h) in faces:
+    # Add padding to the image to simulate a larger field of view
+    frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+    # Convert the BGR image to RGB
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # To improve performance, optionally mark the image as not writeable to pass by reference.
+    frame.flags.writeable = False
+    # Detect faces
+    results = face_detection.process(frame)
+    # Draw face detections
+    frame.flags.writeable = True
+    # Convert back to BGR for normal viewing
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) 
+
+    if results.detections:
+        # Find the most prominent face based on confidence or another criterion
+        chosen_face = max(results.detections, key=lambda det: det.score)
+        # Extract bounding box coordinates from the chosen face
+        bboxC = chosen_face.location_data.relative_bounding_box
+        ih, iw, _ = frame.shape
+        bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
+               int(bboxC.width * iw), int(bboxC.height * ih)
+        x, y, w, h = bbox
+
+        # Convert to greyscale 
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Plot the border around the face
         if not headless:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         face_roi = gray[y:y+h, x:x+w]
