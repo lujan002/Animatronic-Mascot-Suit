@@ -1,19 +1,30 @@
 import cv2
 import numpy as np
 
+# Path to model files
+model_configuration = "/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/deploy.prototxt"
+model_weights = "/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/res10_300x300_ssd_iter_140000.caffemodel"
+
 # Load the model
-net = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'res10_300x300_ssd_iter_140000.caffemodel')
+net = cv2.dnn.readNetFromCaffe(model_configuration, model_weights)
 
 # Start video capture
 cap = cv2.VideoCapture('/dev/video0')  # 0 is typically the default value for the first camera
+
+frame_count = 0
+input_size = (300, 300)  # You can change this to other sizes like (224, 224)
 
 while True:
     ret, frame = cap.read()
     if not ret:
         break
 
+    frame_count += 1
+    if frame_count % 5 != 0:  # Skip every other frame
+        continue
     (h, w) = frame.shape[:2]
-    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+    # Convert frame to blob
+    blob = cv2.dnn.blobFromImage(cv2.resize(frame, input_size), scalefactor=1.0, size=input_size, mean=(104.0, 177.0, 123.0))
     net.setInput(blob)
     detections = net.forward()
 

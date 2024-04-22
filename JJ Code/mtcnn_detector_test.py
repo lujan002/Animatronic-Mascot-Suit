@@ -1,8 +1,6 @@
 from mtcnn import MTCNN
 import cv2
 
-import sys
-sys.setdefaultencoding('utf-8')
 
 detector = MTCNN()
 cap = cv2.VideoCapture('/dev/video0') # 0 for the first camera device

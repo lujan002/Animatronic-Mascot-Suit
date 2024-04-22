@@ -5,7 +5,7 @@ import cv2
 detector = dlib.get_frontal_face_detector()
 
 # Open the default camera
-cap = cv2.VideoCapture('/dev/video1')
+cap = cv2.VideoCapture('/dev/video0')
 
 while True:
     ret, frame = cap.read()
