@@ -8,13 +8,13 @@ Servo servo4;
 
 void setup() {
   Serial.begin(9600);
-  servo1.attach(3);
-  servo1.write(40);
-  servo2.attach(5);
+  servo1.attach(10);
+  servo1.write(90);
+  servo2.attach(11);
   servo2.write(90);  
-  servo3.attach(6);
+  servo3.attach(12);
   servo3.write(90);
-  servo4.attach(9);
+  servo4.attach(13);
   servo4.write(90);
   //Attach more servos as needed
 }
