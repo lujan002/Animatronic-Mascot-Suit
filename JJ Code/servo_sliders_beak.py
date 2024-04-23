@@ -27,7 +27,7 @@ def update_slider1(event):
     value1 = slider1.get()
     label1.config(text=f"Value: {value1}")
     # Update slider2 in the opposite direction
-    slider2.set(190 - value1)
+    slider2.set(180 - value1)
     update_slider2(None)  # Update slider2's label and send to Arduino
     send_to_arduino()
 
@@ -36,7 +36,7 @@ def update_slider2(event):
     label2.config(text=f"Value: {value2}")
     # Update slider1 in the opposite direction only if this wasn't called by slider1's update
     if event:
-        slider1.set(190 - value2)
+        slider1.set(180 - value2)
         update_slider1(None)  # Update slider1's label and send to Arduino
     send_to_arduino()
 
@@ -45,7 +45,7 @@ root = tk.Tk()
 root.title("Servo Control")
 
 # Create the first slider
-slider1 = ttk.Scale(root, from_=75, to=115, orient='horizontal')
+slider1 = ttk.Scale(root, from_=65, to=145, orient='horizontal')
 slider1.pack()
 slider1.set(40)
 label1 = tk.Label(root, text="Value: 40")
