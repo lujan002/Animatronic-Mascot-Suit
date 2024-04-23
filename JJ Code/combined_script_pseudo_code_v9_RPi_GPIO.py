@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 11 21:00:16 2024
-
-@author: 20Jan
-"""
 import os
 os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
@@ -27,18 +21,87 @@ from imutils.video import VideoStream
 import argparse
 
 import pigpio
+
+from gpiozero import Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
+
 import mediapipe as mp
 
 # Initialize pigpio
 pi = pigpio.pi()
 
-# Constants for GPIO pin numbers for the servos
-servo_pin_beak_l = 26 
-servo_pin_beak_r = 16
+# # Constants for GPIO pin numbers for the servos
+beak_l = 5 # Left beak
+beak_r = 6 # Right beak
+eyelid_l = 22# Left eyelid servo
+eyelid_l_sw_t = 17#Left eyelid top limit switch
+eyelid_l_sw_b = 27#Left eyelid bottom limit switch
+eyelid_r = 18# Right eyelid servo
+eyelid_r_sw_t = 14# Right eyelid top limit switch
+eyelid_r_sw_b = 15# Right eyelid bottom limit switch
+# # angry_led =
+# # happy_led = 
+# # sad_led = 
+# # surprised_led =
+# # neutral_led =
+# # mouth_led = 
+# # eye_led = 
 
-# Constants for beak control
-BEAK_ANGLE_1 = 108 
-BEAK_ANGLE_2 = 92   
+# Constants for eyebrow control
+eyebrow_angles = {
+    'Angry': {'l_o': 46, 'l_i': 52, 'r_i': 121, 'r_o': 149},
+    'Happy': {'l_o': 86, 'l_i': 94, 'r_i': 92, 'r_o': 115},
+    'Sad': {'l_o': 136, 'l_i': 159, 'r_i': 23, 'r_o': 56},
+    'Surprise': {'l_o': 75, 'l_i': 144, 'r_i': 23, 'r_o': 108},
+    'Neutral': {'l_o': 121, 'l_i': 73, 'r_i': 102, 'r_o': 60},
+    'Rizz': {'l_o': 138, 'l_i': 69, 'r_i': 29, 'r_o': 121}
+}
+
+# Constants for eyebrow control
+eyelid_angles = {
+    'Angry': {'l': 46, 'r': 52},
+    'Happy': {'l_o': 86, 'l_i': 94, 'r_i': 92, 'r_o': 115},
+    'Sad': {'l_o': 136, 'l_i': 159, 'r_i': 23, 'r_o': 56},
+    'Surprise': {'l_o': 75, 'l_i': 144, 'r_i': 23, 'r_o': 56},
+    'Neutral': {'l_o': 121, 'l_i': 73, 'r_i': 102, 'r_o': 60},
+    'Rizz': {'l_o': 138, 'l_i': 69, 'r_i': 29, 'r_o': 121}
+}
+
+BEAK_ANGLE_1 = 108
+BEAK_ANGLE_2 = 92
+
+# GPIO pin numbers for the servos
+eyebrow_pins = {
+    'l_o': 16,  # Example GPIO pin numbers
+    'l_i': 25,
+    'r_i': 24,
+    'r_o': 23
+}
+
+# # Configure the limit switch pins as input with internal pull-up resistor
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(eyelid_l_sw_t, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(eyelid_l_sw_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(eyelid_r_sw_t, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(eyelid_r_sw_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+# Setup pigpio for hardware PWM which provides better control
+factory = PiGPIOFactory()
+
+# Create a servo object
+eyelid_l_servo = Servo(eyelid_l, pin_factory=factory, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+eyelid_r_servo = Servo(eyelid_r, pin_factory=factory, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+
+def set_eyebrow(emotion):
+    # Check if the emotion is in the predefined angles
+    if emotion in eyebrow_angles:
+        # Set each eyebrow servo to the angle based on the emotion
+        for key, pin in eyebrow_pins.items():
+            angle = eyebrow_angles[emotion][key]
+            set_servo_angle(pin, angle)
+            print(f"Set eyebrow '{key}' to angle {angle} for emotion '{emotion}'.")
+    else:
+        print(f"No eyebrow angles defined for emotion '{emotion}'.")
 
 # Helper function to set servo angles
 def set_servo_angle(servo_pin, angle):
@@ -46,10 +109,44 @@ def set_servo_angle(servo_pin, angle):
     pulsewidth = int((angle / 180.0) * 2000 + 500)
     pi.set_servo_pulsewidth(servo_pin, pulsewidth)
 
+def control_eyelid(servo_pin, direction, simulate_limit_switch=False):
+    try:
+        pulsewidth = 1500  # Neutral position
+        if direction == 'close':
+            pulsewidth = 2000  # Rotate clockwise
+            limit_switch = eyelid_l_sw_b if servo_pin == eyelid_l else eyelid_r_sw_b
+        elif direction == 'open':
+            pulsewidth = 1000  # Rotate counterclockwise
+            limit_switch = eyelid_l_sw_t if servo_pin == eyelid_l else eyelid_r_sw_t
+        else:
+            raise ValueError("Invalid direction for eyelid control: must be 'close' or 'open'")
+
+        # Command the servo to move
+        pi.set_servo_pulsewidth(servo_pin, pulsewidth)
+        time.sleep(0.01)  # Give some time for servo to reach the position
+
+        # Simulate or check limit switch
+        if simulate_limit_switch:
+            print("Simulation mode: Assuming limit switch reached, stopping servo.")
+            pi.set_servo_pulsewidth(servo_pin, 1500)  # Stop the servo
+        else:
+            if GPIO.input(limit_switch) == GPIO.LOW:
+                print("Limit switch reached, stopping servo.")
+                pi.set_servo_pulsewidth(servo_pin, 1500)  # Stop the servo
+            else:
+                print("Limit switch not reached, checking again.")
+                time.sleep(0.2)  # Give more time and check again
+                if GPIO.input(limit_switch) == GPIO.LOW:
+                    print("Limit switch reached after additional time, stopping servo.")
+                    pi.set_servo_pulsewidth(servo_pin, 1500)  # Stop the servo
+                else:
+                    print("Warning: Limit switch not reached. Possible mechanical issue or misalignment.")
+    except Exception as e:
+        print(f"Error controlling eyelid: {e}")
+
+
 # Define whether to run the script in headless mode
 headless = False
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 # Load TFLite model and allocate tensors (for emotion detection).
 # interpreter = tf.lite.Interpreter(model_path="/Users/20Jan/Junior Jay Capstone/JJ Code/model.tflite")
@@ -65,6 +162,18 @@ input_shape = input_details[0]['shape']
 output_shape = output_details[0]['shape']
 
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Surprise'}
+
+# Bias factor adjustments
+ANG_INDEX = 0
+HAP_INDEX = 3
+SAD_INDEX = 5  
+SUR_INDEX = 6
+NEU_INDEX = 4
+ANG_BIAS_FACTOR = 0.25
+HAP_BIAS_FACTOR = 0.25
+SAD_BIAS_FACTOR = 1
+NEU_BIAS_FACTOR = 0.5
+SUR_BIAS_FACTOR = 1
 
 # Load dlib model for eye and mouth detection
 predictor = dlib.shape_predictor('/home/lujan002/Repositories/Animatronic-Mascot-Suit/JJ Code/shape_predictor_68_face_landmarks.dat')
@@ -90,15 +199,15 @@ emotion_stability_buffer = []
 stability_frames = 3  # Number of frames to keep emotion stable
 stable_emotion = ["Neutral"] * stability_frames
 
-# Bias factor adjustments
-SAD_INDEX = 5  # Assuming 'Sad' is at index 5
-SAD_BIAS_FACTOR = 0.5
-
 
 # Function to adjust predictions
 def adjust_predictions(predictions):
     print("Before adjustment:", predictions)
+    predictions[0][ANG_INDEX] *= ANG_BIAS_FACTOR
+    predictions[0][HAP_INDEX] *= HAP_BIAS_FACTOR
     predictions[0][SAD_INDEX] *= SAD_BIAS_FACTOR
+    predictions[0][SUR_INDEX] *= SUR_BIAS_FACTOR
+    predictions[0][NEU_INDEX] *= NEU_BIAS_FACTOR
     total = np.sum(predictions)
     predictions /= total if total > 0 else 1
     print("After adjustment:", predictions)
@@ -169,7 +278,8 @@ else:
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)continue
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+
 # Ensure the settings were applied by checking the actual values
 actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -178,7 +288,7 @@ print(f"Camera set to width: {actual_width}, height: {actual_height}")
 # Padding parameters
 top, bottom, left, right = [100]*4  # Adjust these values based on your needs
 
-frame_rate_limit = 5  # Target number of frames per second
+frame_rate_limit = 5 # Target number of frames per second
 last_time = time.time()
 
 while True:   
@@ -188,7 +298,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         print("Error: Frame not read.")
-        continue
+        break
     # Alternative approach: Capture less frames
     current_time = time.time()
     elapsed = current_time - last_time
@@ -284,8 +394,8 @@ while True:
             if stable_emotion[-1] != stable_emotion[-2]:
                 turn_led(stable_emotion[-2], False)
                 turn_led(stable_emotion[-1])
-                # send signal to Arduino to update eyebrows based on emotion
-            # turn_led(stable_emotion[-1])
+                # send signal to update eyebrows based on emotion   
+                set_eyebrow(stable_emotion[-1])
 
             # Detecting blinks with Dlib landmarks
             rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
@@ -329,41 +439,54 @@ while True:
                     # otherwise, the eye aspect ratio is not below the blink threshold
                     turn_led('Eyes')                
                     # send signal to close eyes
+                    eyelid_l_servo.min()
+                    eyelid_r_servo.min()
+                    stateSwitch_l_t = GPIO.input(eyelid_l_sw_t)
+                    stateSwitch_l_b = GPIO.input(eyelid_l_sw_b)
+                    stateSwitch_r_t = GPIO.input(eyelid_r_sw_t)
+                    stateSwitch_r_b = GPIO.input(eyelid_r_sw_b)
+
+                    if stateSwitch_l_t == GPIO.LOW:  # If switch 1 is pressed
+                        eyelid_l_servo.max()  # Equivalent to myServo.write(180) in Arduino
+                    elif stateSwitch_l_b == GPIO.LOW:  # If switch 2 is pressed
+                        eyelid_l_servo.min()  # Equivalent to myServo.write(0) in Arduino
+                    if stateSwitch_r_t == GPIO.LOW:  # If switch 3 is pressed
+                        eyelid_r_servo.max()  # Equivalent to myServo.write(180) in Arduino
+                    elif stateSwitch_r_b == GPIO.LOW:  # If switch 4 is pressed
+                        eyelid_r_servo.min()  # Equivalent to myServo.write(0) in Arduino
+
+                    time.sleep(0.01)  # Delay to prevent bouncing effects
+
+                    # while GPIO.input(eyelid_l_sw_b):
+                    #     control_eyelid(eyelid_l, 'close',simulate_limit_switch=True)
+                    # while GPIO.input(eyelid_r_sw_b):
+                    #     control_eyelid(eyelid_r, 'close',simulate_limit_switch=True)
                     if not headless:
                         cv2.putText(frame, "Eyes Closed!", (x+w,y+40),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)                   
-            # if leftEAR < EYE_AR_THRESH:
-            #     COUNTER += 1
-            #     # otherwise, the eye aspect ratio is not below the blink
-            # # threshold
-            #     cv2.putText(frame, "Left Eye is Closed!", (x-80,y+40),
-            #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
-            
-            # if rightEAR < EYE_AR_THRESH:
-            #     COUNTER += 1
-            #     # otherwise, the eye aspect ratio is not below the blink
-            # # threshold
-            #     cv2.putText(frame, "Right Eye is Closed!", (x+w,y+40),
-            #        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)
             else:
                 turn_led('Eyes', False)
                 # send signal to open eyes 
+                # while GPIO.input(eyelid_l_sw_t):
+                #     control_eyelid(eyelid_l, 'open',simulate_limit_switch=True)
+                # while GPIO.input(eyelid_r_sw_t):
+                #     control_eyelid(eyelid_r, 'open',simulate_limit_switch=True)
                 COUNTER = 0
                 
             # Draw text if mouth is open
             if mar > MOUTH_AR_THRESH:
                 turn_led('Mouth')
                 # send signal to open mouth 
-                set_servo_angle(servo_pin_beak_l, BEAK_ANGLE_1)
-                set_servo_angle(servo_pin_beak_r, BEAK_ANGLE_2)
+                set_servo_angle(beak_l, BEAK_ANGLE_1)
+                set_servo_angle(beak_r, BEAK_ANGLE_2)
                 if not headless:
                     cv2.putText(frame, "Mouth is Open!", (x+w,y+100),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
             else:
                 turn_led('Mouth', False)
                 # send signal to close mouth 
-                set_servo_angle(servo_pin_beak_l, BEAK_ANGLE_2)
-                set_servo_angle(servo_pin_beak_r, BEAK_ANGLE_1)
+                set_servo_angle(beak_l, BEAK_ANGLE_2)
+                set_servo_angle(beak_r, BEAK_ANGLE_1)
         except Exception as e:
             print(f"Error processing the most prominent face: {e}")
     if not headless:
@@ -375,4 +498,6 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
+
 

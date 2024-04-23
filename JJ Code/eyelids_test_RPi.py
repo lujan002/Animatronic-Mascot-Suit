@@ -4,11 +4,11 @@ import RPi.GPIO as GPIO
 import time
 
 # Define the pin numbers for the limit switches
-limitSwitchPin1 = 2
-limitSwitchPin2 = 3
+limitSwitchPin1 = 17
+limitSwitchPin2 = 27
 
 # Define the pin number for the servo
-servoPin = 18  # Using GPIO18, make sure to use a PWM capable pin
+servoPin = 22  # Using GPIO18, make sure to use a PWM capable pin
 
 # Setup pigpio for hardware PWM which provides better control
 factory = PiGPIOFactory()
