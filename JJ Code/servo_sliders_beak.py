@@ -35,21 +35,38 @@ def slider_to_servo(value, min_val, max_val):
 def update_slider1(event):
     value1 = slider1.get()
     label1.config(text=f"Value: {value1}")
+<<<<<<< HEAD
     slider2.set(178 - value1)
     update_slider2(None)
     update_servos()
+=======
+    # Update slider2 in the opposite direction
+    slider2.set(178 - value1)
+    update_slider2(None)  # Update slider2's label and send to Arduino
+    send_to_arduino()
+>>>>>>> 35ba36025ccfcfcd19106c84bc3b9c439ef26831
 
 def update_slider2(event):
     value2 = slider2.get()
     label2.config(text=f"Value: {value2}")
     if event:
         slider1.set(178 - value2)
+<<<<<<< HEAD
         update_slider1(None)
     update_servos()
+=======
+        update_slider1(None)  # Update slider1's label and send to Arduino
+    send_to_arduino()
+>>>>>>> 35ba36025ccfcfcd19106c84bc3b9c439ef26831
 
 root = tk.Tk()
 root.title("Servo Control")
 
+<<<<<<< HEAD
+=======
+# LEFT BEAK SERVO IS SERVO 1 (PIN 10)
+# Create the first slider
+>>>>>>> 35ba36025ccfcfcd19106c84bc3b9c439ef26831
 slider1 = ttk.Scale(root, from_=85, to=111, orient='horizontal')
 slider1.pack()
 slider1.set(98)  # Initial value adjusted
@@ -57,6 +74,11 @@ label1 = tk.Label(root, text="Value: 98")
 label1.pack()
 slider1.bind("<B1-Motion>", update_slider1)
 
+<<<<<<< HEAD
+=======
+# RIGHT BEAK SERVO IS SERVO 2 (PIN 11)
+# Create the second slider
+>>>>>>> 35ba36025ccfcfcd19106c84bc3b9c439ef26831
 slider2 = ttk.Scale(root, from_=67, to=82, orient='horizontal')
 slider2.pack()
 slider2.set(80)  # Initially set to opposite of slider1
