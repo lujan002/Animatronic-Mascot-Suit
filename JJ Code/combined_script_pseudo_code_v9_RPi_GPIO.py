@@ -14,7 +14,6 @@ import io
 
 import RPi.GPIO as GPIO
 import time
-
 import tensorflow as tf
 
 from imutils.video import VideoStream
@@ -37,8 +36,8 @@ eyelid_l = 22# Left eyelid servo
 eyelid_l_sw_t = 17#Left eyelid top limit switch
 eyelid_l_sw_b = 27#Left eyelid bottom limit switch
 eyelid_r = 18# Right eyelid servo
-eyelid_r_sw_t = 14# Right eyelid top limit switch
-eyelid_r_sw_b = 15# Right eyelid bottom limit switch
+eyelid_r_sw_t = 13# Right eyelid top limit switch
+eyelid_r_sw_b = 12# Right eyelid bottom limit switch
 # # angry_led =
 # # happy_led = 
 # # sad_led = 
@@ -47,28 +46,29 @@ eyelid_r_sw_b = 15# Right eyelid bottom limit switch
 # # mouth_led = 
 # # eye_led = 
 
+# # Setup pigpio for hardware PWM which provides better control
+# factory = PiGPIOFactory()
+
+# # Create a servo object
+# L_Eyelid_Servo = Servo(eyelid_l, pin_factory=factory, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+
+# # Set up limit switch pins as an input and enable the internal pull-up resistor
+# GPIO.setup(eyelid_l_sw_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 # Constants for eyebrow control
 eyebrow_angles = {
-    'Angry': {'l_o': 46, 'l_i': 52, 'r_i': 121, 'r_o': 149},
-    'Happy': {'l_o': 86, 'l_i': 94, 'r_i': 92, 'r_o': 115},
-    'Sad': {'l_o': 136, 'l_i': 159, 'r_i': 23, 'r_o': 56},
-    'Surprise': {'l_o': 75, 'l_i': 144, 'r_i': 23, 'r_o': 108},
-    'Neutral': {'l_o': 121, 'l_i': 73, 'r_i': 102, 'r_o': 60},
-    'Rizz': {'l_o': 138, 'l_i': 69, 'r_i': 29, 'r_o': 121}
+    'Angry': {'l_o': 60, 'l_i': 63, 'r_i': 108, 'r_o': 145},
+    'Happy': {'l_o': 121, 'l_i': 82, 'r_i': 35, 'r_o': 108},
+    'Sad': {'l_o': 148, 'l_i': 127, 'r_i': 63, 'r_o': 82},
+    'Surprise': {'l_o': 45, 'l_i': 150, 'r_i': 25, 'r_o': 137},
+    'Neutral': {'l_o': 90, 'l_i': 100, 'r_i': 90, 'r_o': 113},
+    'Rizz': {'l_o': 95, 'l_i': 71, 'r_i': 29, 'r_o': 92}
 }
 
-# Constants for eyebrow control
-eyelid_angles = {
-    'Angry': {'l': 46, 'r': 52},
-    'Happy': {'l_o': 86, 'l_i': 94, 'r_i': 92, 'r_o': 115},
-    'Sad': {'l_o': 136, 'l_i': 159, 'r_i': 23, 'r_o': 56},
-    'Surprise': {'l_o': 75, 'l_i': 144, 'r_i': 23, 'r_o': 56},
-    'Neutral': {'l_o': 121, 'l_i': 73, 'r_i': 102, 'r_o': 60},
-    'Rizz': {'l_o': 138, 'l_i': 69, 'r_i': 29, 'r_o': 121}
-}
-
-BEAK_ANGLE_1 = 108
-BEAK_ANGLE_2 = 92
+L_BEAK_OPEN_ANGLE = 111
+R_BEAK_OPEN_ANGLE = 67
+L_BEAK_CLOSED_ANGLE = 88
+R_BEAK_CLOSED_ANGLE = 90
 
 # GPIO pin numbers for the servos
 eyebrow_pins = {
@@ -187,12 +187,15 @@ face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detectio
 
 # Constants for blink and mouth open detection
 EYE_AR_THRESH = 0.21
+MOUTH_AR_THRESH = 0.80
 EYE_AR_CONSEC_FRAMES = 3
-MOUTH_AR_THRESH = 0.76
+MOUTH_OPEN_AR_CONSEC_FRAMES = 4
+MOUTH_CLOSED_AR_CONSEC_FRAMES = 4
 
 # initialize the frame counters and the total number of blinks
-COUNTER = 0
-TOTAL = 0
+EYE_COUNTER = 0
+MOUTH_OPEN_COUNTER = 0
+MOUTH_CLOSED_COUNTER = 0
 
 # Initialize emotion stability control
 emotion_stability_buffer = []
@@ -434,59 +437,47 @@ while True:
             # check to see if the eye aspect ratio is below the blink
             # threshold, and if so, increment the blink frame counter
             if ear < EYE_AR_THRESH:
-                COUNTER += 1
-                if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                EYE_COUNTER += 1
+                if EYE_COUNTER >= EYE_AR_CONSEC_FRAMES:
                     # otherwise, the eye aspect ratio is not below the blink threshold
                     turn_led('Eyes')                
                     # send signal to close eyes
-                    eyelid_l_servo.min()
-                    eyelid_r_servo.min()
-                    stateSwitch_l_t = GPIO.input(eyelid_l_sw_t)
-                    stateSwitch_l_b = GPIO.input(eyelid_l_sw_b)
-                    stateSwitch_r_t = GPIO.input(eyelid_r_sw_t)
-                    stateSwitch_r_b = GPIO.input(eyelid_r_sw_b)
+                    # L_Eyelid_Servo.max()  # Moves eyes down. Equivalent to myServo.write(0) in Arduino
+                    # if GPIO.input(eyelid_l_sw_b) == GPIO.LOW:  # If bottom switch is pressed
+                    #     continue
+                    EYE_COUNTER = 0
 
-                    if stateSwitch_l_t == GPIO.LOW:  # If switch 1 is pressed
-                        eyelid_l_servo.max()  # Equivalent to myServo.write(180) in Arduino
-                    elif stateSwitch_l_b == GPIO.LOW:  # If switch 2 is pressed
-                        eyelid_l_servo.min()  # Equivalent to myServo.write(0) in Arduino
-                    if stateSwitch_r_t == GPIO.LOW:  # If switch 3 is pressed
-                        eyelid_r_servo.max()  # Equivalent to myServo.write(180) in Arduino
-                    elif stateSwitch_r_b == GPIO.LOW:  # If switch 4 is pressed
-                        eyelid_r_servo.min()  # Equivalent to myServo.write(0) in Arduino
-
-                    time.sleep(0.01)  # Delay to prevent bouncing effects
-
-                    # while GPIO.input(eyelid_l_sw_b):
-                    #     control_eyelid(eyelid_l, 'close',simulate_limit_switch=True)
-                    # while GPIO.input(eyelid_r_sw_b):
-                    #     control_eyelid(eyelid_r, 'close',simulate_limit_switch=True)
                     if not headless:
                         cv2.putText(frame, "Eyes Closed!", (x+w,y+40),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0),2)                   
             else:
                 turn_led('Eyes', False)
                 # send signal to open eyes 
-                # while GPIO.input(eyelid_l_sw_t):
-                #     control_eyelid(eyelid_l, 'open',simulate_limit_switch=True)
-                # while GPIO.input(eyelid_r_sw_t):
-                #     control_eyelid(eyelid_r, 'open',simulate_limit_switch=True)
-                COUNTER = 0
+                # L_Eyelid_Servo.min()  # Moves eyes up. Equivalent to myServo.write(0) in Arduino
+                # if GPIO.input(eyelid_l_sw_b) == GPIO.LOW:  # If switch 2 is pressed
+                #     continue
+                EYE_COUNTER = 0
                 
             # Draw text if mouth is open
             if mar > MOUTH_AR_THRESH:
-                turn_led('Mouth')
-                # send signal to open mouth 
-                set_servo_angle(beak_l, BEAK_ANGLE_1)
-                set_servo_angle(beak_r, BEAK_ANGLE_2)
-                if not headless:
-                    cv2.putText(frame, "Mouth is Open!", (x+w,y+100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
+                MOUTH_OPEN_COUNTER += 1
+                if MOUTH_OPEN_COUNTER > MOUTH_OPEN_AR_CONSEC_FRAMES:
+                    turn_led('Mouth')
+                    # send signal to open mouth 
+                    set_servo_angle(beak_l, L_BEAK_OPEN_ANGLE)
+                    set_servo_angle(beak_r, R_BEAK_OPEN_ANGLE)
+                    if not headless:
+                        cv2.putText(frame, "Mouth is Open!", (x+w,y+100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
+                    MOUTH_OPEN_COUNTER = 0
             else:
-                turn_led('Mouth', False)
-                # send signal to close mouth 
-                set_servo_angle(beak_l, BEAK_ANGLE_2)
-                set_servo_angle(beak_r, BEAK_ANGLE_1)
+                MOUTH_CLOSED_COUNTER += 1
+                if MOUTH_CLOSED_COUNTER > MOUTH_CLOSED_AR_CONSEC_FRAMES:
+                    turn_led('Mouth', False)
+                    # send signal to close mouth 
+                    set_servo_angle(beak_l, L_BEAK_CLOSED_ANGLE)
+                    set_servo_angle(beak_r, R_BEAK_CLOSED_ANGLE)
+                    MOUTH_CLOSED_COUNTER = 0
         except Exception as e:
             print(f"Error processing the most prominent face: {e}")
     if not headless:

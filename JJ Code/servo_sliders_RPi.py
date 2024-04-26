@@ -14,7 +14,6 @@ def update_servo(slider, label, pin):
     value = slider.get()
     label.config(text=f"Value: {int(value)}")
     set_servo_angle(pin, value)
-
 # Function to convert angle to PWM pulse width
 def set_servo_angle(pin, angle):
     pulse_width = int(angle / 180.0 * 2000 + 500)  # Convert angle to pulse width
