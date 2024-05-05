@@ -16,7 +16,7 @@ void setup() {
   pinMode(limitSwitchPin1, INPUT_PULLUP);
   pinMode(limitSwitchPin2, INPUT_PULLUP);
 
-  // Attach the servo on pin 9 to the servo object
+  // Attach the servo on pin x to the servo object
   myServo.attach(servoPin);
 
   // Move servo to initial position (half speed in one direction)
