@@ -52,13 +52,11 @@ JJ Code/send_expression_dlib.py
 JJ Code/send_expression_mediapipe.py
 JJ Code/mtcnn_detector_test.py
 JJ Code/outpy.avi
-<<<<<<< HEAD
 JJ Code/model_optimal2.h5
 JJ Code/model_optimal.h5
 Voltage Converter PCB
 Emotion LED
 LM317-voltage-source.png
-=======
 JJ Code/model_optimal3.h5
 JJ Code/model_weights3.weights.h5
 JJ Code/model_optimal.h5
@@ -104,4 +102,3 @@ HUSB238.png
 3D Parts/Eyebrow/stl
 3D Parts/Mounts
 3D Parts/cam_v2
->>>>>>> new-branch
