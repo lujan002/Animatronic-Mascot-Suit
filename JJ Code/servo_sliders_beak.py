@@ -3,7 +3,7 @@
 Created on Thu Feb 15 16:34:46 2024
 
 Program to test movement of the beak using Raspberry Pi GPIO.
-Slider 1 and 2 have an inverse relationship centered around 95 degrees (due to physical calibration)
+Slider 1 and 2 have an inverse relationship centered around 89 degrees (due to physical calibration)
 Sliders 3 and 4 are irrelevant and just meant for lazy compatibility with a previous Arduino version.
 """
 

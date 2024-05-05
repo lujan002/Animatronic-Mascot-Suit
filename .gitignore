@@ -42,6 +42,8 @@ JJ Code/yawn_model_80.h5
 /JJ Code/combined_script_pseudo_code_v6.py
 /JJ Code/combined_script_pseudo_code_v7.py
 /JJ Code/combined_script_pseudo_code_v8_arduino.py
+/JJ Code/combined_script_pseudo_code_v8_RPi_GPIO.py
+JJ Code/combined_script_pseudo_code_v10_RPi_GPIO.py
 /JJ Code/combined_script_pseudo_code_v10.py
 /JJ Code/webcam-emotion-detection.py
 JJ Code/webcam-emotion-detection copy.py
@@ -55,5 +57,48 @@ JJ Code/send_expression_dlib.py
 JJ Code/send_expression_mediapipe.py
 JJ Code/mtcnn_detector_test.py
 JJ Code/outpy.avi
-JJ Code/model_optimal2.h5
+JJ Code/model_optimal3.h5
+JJ Code/model_weights3.weights.h5
 JJ Code/model_optimal.h5
+iCloud Photos from Scott Klein
+Emotion LED
+JJ Code/beak_servo_test
+JJ Code/eyebrow_servo_test
+JJ Code/control_all_jj_servos
+JJ Code/eyelids_test_dual
+JJ Code/jj_expression_move_eyebrow_servos
+JJ Code/jj_slider_move_eyebrow_servos
+JJ Code/analyze_eyebrow_position.py
+JJ Code/picamera_test.py
+ME 641 Deliverables
+JJ Code/res10_300x300_ssd_iter_140000.caffemodel
+JJ Code/GPIO_test_RPi.py
+JJ Code/create_sound.py
+JJ Code/cv2_test.py
+JJ Code/deploy.prototxt
+JJ Code/detect_blinks_tiny.py
+JJ Code/dlib_face_detector_test.py
+JJ Code/eyebrow_servo_sliders.py
+JJ Code/eyelids_test_RPi_2.py
+JJ Code/eyelids_test_RPi.py
+JJ Code/mediapipe_face_detector_test.py
+JJ Code/mediapipe_face_landmark_test.py
+JJ Code/GPIO_led_test.py
+JJ Code/detect_blinks_RPi.py
+Voltage Converter PCB
+Arducam.png
+EyelidInstall.png
+Junior Jay Documentation.docx
+LM317-voltage-source.png
+Neutral.png
+RaspberryPi.png
+PowerBus.png
+rough_electrical_sketch.png
+Sad.png
+voltage_converter_board.png
+voltage_converter_schematic.png
+HUSB238.png
+3D Parts/Beak/stl
+3D Parts/Eyebrow/stl
+3D Parts/Mounts
+3D Parts/cam_v2
