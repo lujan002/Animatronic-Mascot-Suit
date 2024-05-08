@@ -13,7 +13,7 @@ Designing an entirely new mascot head from the ground up was not feasible for th
 This project provided a great mix of mechanical, electrical, and software engineering challanges. The engineering objectives were to modify this retired mascot head with seamless control of the mouth, eyebrow, and eyelid actuation mechanisms using custom facial expression detection & control software, while maintaining durability, comfort, and ease of use. The project started in Aug. 2023 with initial drafts of mechanical models, code, and electrical schematics, then concluded in late Apr. 2024 with a functional protoype that met the majority of our project objectives. Below will be an outline of the final state of these three systems. 
 
 <p align="center">
-  <img src="TeamPhoto.png" alt="TeamPhoto">
+  <img src="TeamPhoto.png" alt="TeamPhoto" width="70%" height="auto">
 </p>
 
 ## Mechanism Sub-Systems
@@ -93,7 +93,7 @@ There were two key considerations when designing this system. This system contai
   <img src="Electronics.png" alt="Electronics">
 </p>
 <p align="center">
-  <img src="ElectricalDiagram.png" alt="ElectricalDiagram">
+  <img src="ElectricalDiagram.png" alt="ElectricalDiagram" width="50%" height="auto">
 </p>
 
 ### Voltage Converter PCB
@@ -104,10 +104,10 @@ The schemetic shown below incorporates an [LM317 Voltage Regulator](https://www.
 The board was designed in KiCAD and printed at the school shop.
 
 <p align="center">
-  <img src="VoltageConverterSchematic.png" alt="VoltageConverterSchematic">
+  <img src="VoltageConverterSchematic.png" alt="VoltageConverterSchematic" width="30%" height="auto">
 </p>
 <p align="center">
-  <img src="VoltageConverterPCB.png" alt="VoltageConverterBoard">
+  <img src="VoltageConverterPCB.png" alt="VoltageConverterBoard" width="30%" height="auto">
 </p>
 
 ### Emotion LED Indicator Panel
@@ -116,10 +116,10 @@ One concern during operation of the animatronic was that the wearer would have n
 The board was designed in KiCAD and printed at the school shop.
 
 <p align="center">
-  <img src="LEDSchematic.png" alt="LEDSchematic">
+  <img src="LEDSchematic.png" alt="LEDSchematic" width="30%" height="auto">
 </p>
 <p align="center">
-  <img src="LEDPCB.png" alt="LEDPCB">
+  <img src="LEDPCB.png" alt="LEDPCB" width="30%" height="auto">
 </p>
 
 ### Future Work
