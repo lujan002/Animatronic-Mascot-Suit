@@ -1,6 +1,6 @@
 ﻿# Junior-Jay Animatronic Mascot 
 
-<!-- Insert documentation video  -->
+Watch overview video [here](https://youtu.be/p1z4z74mzpA)
 
 The scope of this project was to develop a wearable, Disney-style, animatronic suit with actuated facial features for the University of Kansas's flagship line of "Jayhawk" mascots. The project was sponsored by the Mechanical Engineering Department at the University of Kansas, with the primary client being the University of Kansas head mascot coach. The initiative aimed to revolutionize the university's mascot program by incorporating advanced, expressive features into a new mascot called "Junior Jay". The primary requirements outlined by the client included the ability for the mascots to display a wide range of dynamic, real-time facial expressions, like those seen in professionally animated characters. 
 
